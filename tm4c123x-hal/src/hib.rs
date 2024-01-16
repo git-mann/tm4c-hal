@@ -3,6 +3,7 @@
 use crate::sysctl;
 
 /// Which source to use for the HIB clock
+#[derive(Clone, Copy)]
 pub enum Source {
     /// HIB clock is from an external oscillator
     ExternalOscillator,

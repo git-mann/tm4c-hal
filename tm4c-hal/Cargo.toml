@@ -11,7 +11,7 @@ description = "Common bits of HAL for the TM4C123x/TM4C129x family of microcontr
 keywords = ["arm", "cortex-m", "tm4c", "lm4f120", "hal"]
 categories = ["embedded", "hardware-support", "no-std"]
 license = "MIT OR Apache-2.0"
-edition = "2018"
+edition = "2021"
 repository = "https://github.com/rust-embedded-community/tm4c-hal"
 documentation = "https://docs.rs/tm4c-hal"
 

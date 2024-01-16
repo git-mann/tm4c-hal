@@ -26,7 +26,7 @@ fn main() -> ! {
     let mut eeprom = Eeprom::new(p.EEPROM, &sc.power_control);
 
     match eeprom_test_all(&mut eeprom) {
-        Ok(_) => {
+        Ok(()) => {
             // Huzzah!
         }
         Err(code) => {
@@ -53,7 +53,7 @@ fn main() -> ! {
 
     let mut counter = 0u32;
     loop {
-        writeln!(uart, "Hello, world! counter={}", counter).unwrap();
+        writeln!(uart, "Hello, world! counter={counter}").unwrap();
         counter = counter.wrapping_add(1);
     }
 }
@@ -122,7 +122,7 @@ pub fn eeprom_test_all(eeprom: &mut Eeprom) -> Result<(), EepromError> {
                 assert_eq!(
                     buffer[i], test_array_2[i],
                     "Buffer[4..9] should match test_array_2"
-                )
+                );
             }
         }
     }

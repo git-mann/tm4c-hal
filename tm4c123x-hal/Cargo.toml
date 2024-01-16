@@ -12,7 +12,7 @@ keywords = ["arm", "cortex-m", "tm4c", "lm4f120", "hal"]
 categories = ["embedded", "hardware-support", "no-std"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-embedded-community/tm4c-hal/tm4c123x-hal"
-edition = "2018"
+edition = "2021"
 
 [dependencies.cast]
 version = "0.2.2"

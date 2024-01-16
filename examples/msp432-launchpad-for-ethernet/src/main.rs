@@ -47,7 +47,7 @@ fn main() -> ! {
     let mut counter = 0u32;
     let mut delay = cortex_m::delay::Delay::new(cp.SYST, 120_000_000u32);
     loop {
-        writeln!(uart, "Hello, world! counter={}", counter).unwrap();
+        writeln!(uart, "Hello, world! counter={counter}").unwrap();
         let led_state = counter % 4;
         if led_state == 0 {
             led1.set_high();

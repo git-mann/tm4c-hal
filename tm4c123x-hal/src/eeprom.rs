@@ -69,13 +69,15 @@ impl Eeprom {
         // chip, core voltage, or EEPROM; regardless, it probably should be
         // investigated further.
         // See section 8.2.4.2
-        if final_eeprom.eeprom.eesupp.read().eretry().bit_is_set() {
-            panic!("Eeprom ERETRY bit set, please investigate or stop using the EEPROM peripheral");
-        }
+        assert!(
+            !final_eeprom.eeprom.eesupp.read().eretry().bit_is_set(),
+            "Eeprom ERETRY bit set, please investigate or stop using the EEPROM peripheral"
+        );
 
-        if final_eeprom.eeprom.eesupp.read().pretry().bit_is_set() {
-            panic!("Eeprom PRETRY bit set, please investigate or stop using the EEPROM peripheral");
-        }
+        assert!(
+            !final_eeprom.eeprom.eesupp.read().pretry().bit_is_set(),
+            "Eeprom PRETRY bit set, please investigate or stop using the EEPROM peripheral"
+        );
 
         // 4. Software reset
         sysctl::reset(pc, sysctl::Domain::Eeprom);
@@ -93,13 +95,15 @@ impl Eeprom {
         // chip, core voltage, or EEPROM; regardless, it probably should be
         // investigated further.
         // See section 8.2.4.2
-        if final_eeprom.eeprom.eesupp.read().eretry().bit_is_set() {
-            panic!("Eeprom ERETRY bit set, please investigate or stop using the EEPROM peripheral");
-        }
+        assert!(
+            !final_eeprom.eeprom.eesupp.read().eretry().bit_is_set(),
+            "Eeprom ERETRY bit set, please investigate or stop using the EEPROM peripheral"
+        );
 
-        if final_eeprom.eeprom.eesupp.read().pretry().bit_is_set() {
-            panic!("Eeprom PRETRY bit set, please investigate or stop using the EEPROM peripheral");
-        }
+        assert!(
+            !final_eeprom.eeprom.eesupp.read().pretry().bit_is_set(),
+            "Eeprom PRETRY bit set, please investigate or stop using the EEPROM peripheral"
+        );
 
         // 8. All done
         final_eeprom

@@ -39,7 +39,7 @@ fn main() -> ! {
 
     let mut counter = 0u32;
     loop {
-        writeln!(uart, "Hello, world! counter={}", counter).unwrap();
+        writeln!(uart, "Hello, world! counter={counter}").unwrap();
         counter = counter.wrapping_add(1);
     }
 }

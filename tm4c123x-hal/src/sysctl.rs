@@ -938,31 +938,27 @@ impl ClockSetup {
                     nop();
                 }
 
-                match f {
-                    // We need to use RCC2 for this one
-                    PllOutputFrequency::_80_00mhz => {
-                        p.rcc2.write(|w| {
-                            w.usercc2().set_bit();
-                            // Divide 400 MHz not 200 MHz
-                            w.div400().set_bit();
-                            // div=2 with lsb=0 gives divide by 5, so 400 MHz => 80 MHz
-                            w.sysdiv2lsb().clear_bit();
-                            unsafe { w.sysdiv2().bits(2) };
-                            w.bypass2().clear_bit();
-                            w
-                        });
-                        sysclk = 400_000_000u32 / 5;
-                    }
-                    _ => {
-                        // All the other frequencies can be done with legacy registers
-                        p.rcc.modify(|_, w| {
-                            unsafe { w.sysdiv().bits(f as u8) };
-                            w.usesysdiv().set_bit();
-                            w.bypass().clear_bit();
-                            w
-                        });
-                        sysclk = 400_000_000u32 / (2 * ((f as u32) + 1));
-                    }
+                if let PllOutputFrequency::_80_00mhz = f {
+                    p.rcc2.write(|w| {
+                        w.usercc2().set_bit();
+                        // Divide 400 MHz not 200 MHz
+                        w.div400().set_bit();
+                        // div=2 with lsb=0 gives divide by 5, so 400 MHz => 80 MHz
+                        w.sysdiv2lsb().clear_bit();
+                        unsafe { w.sysdiv2().bits(2) };
+                        w.bypass2().clear_bit();
+                        w
+                    });
+                    sysclk = 400_000_000u32 / 5;
+                } else {
+                    // All the other frequencies can be done with legacy registers
+                    p.rcc.modify(|_, w| {
+                        unsafe { w.sysdiv().bits(f as u8) };
+                        w.usesysdiv().set_bit();
+                        w.bypass().clear_bit();
+                        w
+                    });
+                    sysclk = 400_000_000u32 / (2 * ((f as u32) + 1));
                 }
             }
             _ => {}

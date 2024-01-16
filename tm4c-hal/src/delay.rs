@@ -72,12 +72,12 @@ impl DelayUs<u32> for Delay {
 
 impl DelayUs<u16> for Delay {
     fn delay_us(&mut self, us: u16) {
-        self.delay_us(cast::u32(us))
+        self.delay_us(cast::u32(us));
     }
 }
 
 impl DelayUs<u8> for Delay {
     fn delay_us(&mut self, us: u8) {
-        self.delay_us(cast::u32(us))
+        self.delay_us(cast::u32(us));
     }
 }
