@@ -19,7 +19,7 @@ pub struct Hib {
 
 impl Hib {
     /// Initialize the HIB peripheral, using a clock from `source`
-    pub fn hib(hib: tm4c129x::HIB, source: Source, _pc: &sysctl::PowerControl) -> Self {
+    pub fn new(hib: tm4c129x::HIB, source: Source, _pc: &sysctl::PowerControl) -> Self {
         hib.ctl.write(|w| {
             match source {
                 Source::ExternalCrystal => w.oscsel().clear_bit().oscbyp().clear_bit(),

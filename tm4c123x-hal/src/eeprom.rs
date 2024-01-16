@@ -159,14 +159,11 @@ impl Eeprom {
     /// are any issues (overflow or invalid address).
     fn is_access_valid(&self, address: &EepromAddress, length_bytes: usize) -> bool {
         // Check if the initial address is valid, then check byte length
-        match self.address_to_word_index(&address) {
+        match self.address_to_word_index(address) {
             Ok(start_word_address) => {
-                return start_word_address * BYTES_PER_WORD + length_bytes
-                    < EEPROM_END_ADDRESS_BYTES;
+                start_word_address * BYTES_PER_WORD + length_bytes < EEPROM_END_ADDRESS_BYTES
             }
-            Err(_) => {
-                return false;
-            }
+            Err(_) => false,
         }
     }
 
@@ -182,7 +179,7 @@ impl Eeprom {
         starting_address: &mut EepromAddress,
     ) -> Result<(), EepromError> {
         starting_address.increment(EEPROM_BLOCK_SIZE, EEPROM_NUM_BLOCKS);
-        self.set_block_and_offset(&starting_address)?;
+        self.set_block_and_offset(starting_address)?;
         Ok(())
     }
 }
@@ -193,7 +190,7 @@ impl Busy for Eeprom {
     }
 
     fn wait(&self) {
-        while self.is_busy() == true {}
+        while self.is_busy() {}
     }
 }
 
@@ -204,7 +201,7 @@ impl Blocks for Eeprom {
 
     fn word_index_to_address(&self, word_address: usize) -> Result<EepromAddress, EepromError> {
         if word_address > EEPROM_END_ADDRESS_WORDS {
-            return Err(EepromError::AddressOutOfBounds);
+            Err(EepromError::AddressOutOfBounds)
         } else {
             let block = word_address / EEPROM_BLOCK_SIZE;
             let offset = word_address - (block * EEPROM_BLOCK_SIZE);
@@ -214,9 +211,9 @@ impl Blocks for Eeprom {
 
     fn address_to_word_index(&self, block: &EepromAddress) -> Result<usize, EepromError> {
         if block.block() > EEPROM_NUM_BLOCKS || block.offset() > EEPROM_BLOCK_SIZE {
-            return Err(EepromError::BlockOutOfBounds);
+            Err(EepromError::BlockOutOfBounds)
         } else {
-            return Ok(block.block() * EEPROM_BLOCK_SIZE + block.offset());
+            Ok(block.block() * EEPROM_BLOCK_SIZE + block.offset())
         }
     }
 }
@@ -251,8 +248,8 @@ impl Write for Eeprom {
         }
 
         // Buffer the leftover bytes, if any, and write
-        if leftover_bytes.len() != 0 {
-            let mut buffer = [0 as u8; 4];
+        if !leftover_bytes.is_empty() {
+            let mut buffer = [0_u8; 4];
             for (i, byte) in leftover_bytes.iter().enumerate() {
                 buffer[i] = *byte;
             }
@@ -287,7 +284,7 @@ impl Read for Eeprom {
             return Err(EepromError::ReadBufferTooSmall);
         }
 
-        if !self.is_access_valid(&address, bytes_to_read) {
+        if !self.is_access_valid(address, bytes_to_read) {
             return Err(EepromError::ReadWouldOverflow);
         }
 
@@ -295,7 +292,7 @@ impl Read for Eeprom {
         let leftover_bytes = bytes_to_read % BYTES_PER_WORD;
         let mut address_copy = *address;
 
-        self.set_block_and_offset(&address)?;
+        self.set_block_and_offset(address)?;
 
         let mut byte_offset = 0;
 
@@ -319,8 +316,8 @@ impl Read for Eeprom {
 
             self.increment_offset(&mut address_copy)?;
 
-            for index in 0..leftover_bytes {
-                buffer[byte_offset] = word_as_bytes[index];
+            for &byte in word_as_bytes.iter().take(leftover_bytes) {
+                buffer[byte_offset] = byte;
                 byte_offset += 1;
             }
         }
@@ -345,9 +342,9 @@ impl Erase for Eeprom {
         let leftover_bytes = length_bytes % BYTES_PER_WORD;
         let mut address_copy = *address;
 
-        self.set_block_and_offset(&address)?;
+        self.set_block_and_offset(address)?;
 
-        let zero = 0 as u32;
+        let zero = 0_u32;
         for _i in 0..num_words {
             self.wait();
 
@@ -364,9 +361,9 @@ impl Erase for Eeprom {
 
             let mut word = self.eeprom.eerdwr.read().bits().to_le_bytes();
 
-            for i in 0..leftover_bytes {
-                word[i] = 0;
-            }
+            word.iter_mut()
+                .take(leftover_bytes)
+                .for_each(|loc| *loc = 0);
 
             unsafe {
                 self.eeprom
@@ -387,11 +384,11 @@ impl Erase for Eeprom {
 
         self.set_block(block)?;
 
-        let mut address = EepromAddress::new(block, 0);
+        let address = EepromAddress::new(block, 0);
 
-        let zeros = [0 as u8; EEPROM_BLOCK_SIZE * BYTES_PER_WORD];
+        let zeros = [0_u8; EEPROM_BLOCK_SIZE * BYTES_PER_WORD];
 
-        self.write(&mut address, &zeros)?;
+        self.write(&address, &zeros)?;
 
         self.wait();
 

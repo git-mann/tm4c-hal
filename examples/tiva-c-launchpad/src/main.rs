@@ -64,7 +64,7 @@ pub fn eeprom_test_write_read(
     data_to_write: &[u8],
     read_buffer: &mut [u8],
 ) -> Result<(), EepromError> {
-    eeprom.write(address, &data_to_write)?;
+    eeprom.write(address, data_to_write)?;
     eeprom.read(address, data_to_write.len(), read_buffer)?;
 
     for (i, byte) in data_to_write.iter().enumerate() {
@@ -75,10 +75,10 @@ pub fn eeprom_test_write_read(
 }
 
 pub fn eeprom_test_all(eeprom: &mut Eeprom) -> Result<(), EepromError> {
-    let mut buffer = [0 as u8; 64]; // 64 byte read buffer
+    let mut buffer = [0_u8; 64]; // 64 byte read buffer
 
     // Sanity check for simple mapping from word offset to an EepromAddress
-    let mut address = eeprom.word_index_to_address(52).unwrap();
+    let address = eeprom.word_index_to_address(52).unwrap();
     assert_eq!(address.block(), 3, "Word 52 should be in block 3, offset 4");
     assert_eq!(
         address.offset(),
@@ -95,7 +95,7 @@ pub fn eeprom_test_all(eeprom: &mut Eeprom) -> Result<(), EepromError> {
 
     // Simplest case, middle of a block, no straddle
     let test_array_1: [u8; 4] = [1, 2, 3, 4];
-    eeprom_test_write_read(eeprom, &mut address, &test_array_1, &mut buffer)?;
+    eeprom_test_write_read(eeprom, &address, &test_array_1, &mut buffer)?;
 
     // Test boundry conditions for access that straddles a block
     let test_array_2: [u8; 10] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -104,9 +104,10 @@ pub fn eeprom_test_all(eeprom: &mut Eeprom) -> Result<(), EepromError> {
 
     eeprom.erase(&address_straddle_block, test_array_2.len())?;
     eeprom.read(&address_straddle_block, test_array_2.len(), &mut buffer)?;
-    for i in 0..test_array_2.len() {
-        assert_eq!(buffer[i], 0, "Buffer should be all 0's")
-    }
+    buffer
+        .iter()
+        .take(test_array_2.len())
+        .for_each(|&val| assert_eq!(val, 0, "Buffer should be all 0's"));
 
     // Test the block erase using the straddle address and data
     eeprom.write(&address_straddle_block, &test_array_2)?;

@@ -17,7 +17,7 @@ pub struct Hib {
 
 impl Hib {
     /// Initialize the HIB peripheral, using a clock from `source`
-    pub fn hib(hib: tm4c123x::HIB, source: Source, _pc: &sysctl::PowerControl) -> Self {
+    pub fn new(hib: tm4c123x::HIB, source: Source, _pc: &sysctl::PowerControl) -> Self {
         hib.ctl.write(|w| {
             match source {
                 Source::ExternalOscillator => w.oscbyp().set_bit(),

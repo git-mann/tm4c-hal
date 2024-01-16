@@ -3,7 +3,8 @@
 // The macro is required for the "sealed trait" pattern to work:
 // the traits and the gpios have to be defined in the same crate
 
-///! An internal macro to generate the UART traits
+/// An internal macro to generate the UART traits
+#[allow(clippy::crate_in_macro_def)] // We want to use the macro call's crate for `Sealed`
 #[macro_export]
 macro_rules! uart_traits_macro {
     () => {

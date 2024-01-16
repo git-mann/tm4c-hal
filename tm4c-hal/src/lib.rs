@@ -13,7 +13,8 @@ pub mod serial;
 pub mod sysctl;
 pub mod time;
 
-///! An internal macro to implement the GPIO functionality for each port
+/// An internal macro to implement the GPIO functionality for each port
+#[allow(clippy::crate_in_macro_def)] // We want to use the macro call's crate for `Sealed`
 #[macro_export]
 macro_rules! gpio_macro {
     ($chip_crate:ident, $GPIOX:ident, $gpiox:ident, $iopd:ident, $PXx:ident, [
@@ -522,7 +523,7 @@ macro_rules! gpio_macro {
     }
 }
 
-///! An internal macro to implement the UART functionality for each peripheral
+/// An internal macro to implement the UART functionality for each peripheral
 #[macro_export]
 macro_rules! uart_hal_macro {
     ($(
@@ -771,7 +772,7 @@ macro_rules! uart_hal_macro {
     }
 }
 
-///! An internal macro to help define all the different pin typestates
+/// An internal macro to help define all the different pin typestates
 #[macro_export]
 macro_rules! uart_pin_macro {
     ($UARTn:ident,

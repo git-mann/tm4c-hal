@@ -120,9 +120,9 @@ pub enum CrystalFrequency {
     _25mhz,
 }
 
-impl Into<Hertz> for CrystalFrequency {
-    fn into(self) -> Hertz {
-        Hertz(match self {
+impl From<CrystalFrequency> for Hertz {
+    fn from(val: CrystalFrequency) -> Self {
+        Hertz(match val {
             CrystalFrequency::_4mhz => 4_000_000,
             CrystalFrequency::_4_09mhz => 4_090_000,
             CrystalFrequency::_4_91mhz => 4_910_000,
@@ -183,9 +183,9 @@ pub enum PllOutputFrequency {
     _12_5mhz = 15,
 }
 
-impl Into<Hertz> for PllOutputFrequency {
-    fn into(self) -> Hertz {
-        Hertz(match self {
+impl From<PllOutputFrequency> for Hertz {
+    fn from(val: PllOutputFrequency) -> Self {
+        Hertz(match val {
             PllOutputFrequency::_80_00mhz => 80_000_000,
             PllOutputFrequency::_66_67mhz => 66_670_000,
             PllOutputFrequency::_50_00mhz => 50_000_000,
