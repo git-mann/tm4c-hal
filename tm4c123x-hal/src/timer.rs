@@ -1,16 +1,13 @@
 //! Timers
 
-use crate::{
-    hal::timer::{CountDown, Periodic},
-    sysctl::{self, Clocks},
-};
+use crate::sysctl::{self, Clocks};
 
 #[rustfmt::skip]
 use tm4c123x::{
     TIMER0, TIMER1, TIMER2, TIMER3, TIMER4, TIMER5,
     WTIMER0, WTIMER1, WTIMER2, WTIMER3, WTIMER4, WTIMER5,
 };
-use tm4c_hal::time::Hertz;
+use tm4c_hal::time::{CountDown, Hertz};
 use void::Void;
 
 /// Hardware timers
@@ -29,9 +26,9 @@ pub enum Event {
 macro_rules! hal {
     ($($TIM:ident: ($tim:ident, $powerDomain:ident),)+) => {
         $(
-            impl Periodic for Timer<$TIM> {}
+            impl tm4c_hal::time::Periodic for Timer<$TIM> {}
 
-            impl CountDown for Timer<$TIM> {
+            impl tm4c_hal::time::CountDown for Timer<$TIM> {
                 type Time = Hertz;
 
                 #[allow(unused_unsafe)]

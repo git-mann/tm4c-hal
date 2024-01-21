@@ -61,16 +61,19 @@ pub struct EepromAddress {
 
 impl EepromAddress {
     /// Creates a new EepromAddres with configured block and offset
+    #[inline]
     pub fn new(block: usize, offset: usize) -> Self {
         EepromAddress { block, offset }
     }
 
     /// Returns the block
+    #[inline]
     pub fn block(&self) -> usize {
         self.block
     }
 
     /// Returns the offset
+    #[inline]
     pub fn offset(&self) -> usize {
         self.offset
     }
@@ -78,6 +81,7 @@ impl EepromAddress {
     /// Increments the offset by one, if that would cause an overflow, increment the block. If
     /// both the block and offset wrap, the output for the new block and offset
     /// will both be 0.
+    #[inline]
     pub fn increment(&mut self, offset_size: usize, block_size: usize) -> &mut Self {
         self.offset += 1;
         if self.offset >= offset_size {

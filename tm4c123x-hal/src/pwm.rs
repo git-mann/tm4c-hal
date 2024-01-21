@@ -25,6 +25,21 @@ pub struct OddPWM<T> {
     timer: T,
 }
 
+/// Device specific PWM errors
+#[derive(Debug)]
+pub enum Error {
+    /// TODO: real device specific errors
+    Oops,
+}
+
+impl embedded_hal::pwm::Error for Error {
+    fn kind(&self) -> embedded_hal::pwm::ErrorKind {
+        match self {
+            Error::Oops => embedded_hal::pwm::ErrorKind::Other,
+        }
+    }
+}
+
 macro_rules! into_one_half {
     ($Name:ident, $timer:path, $trait:path, $kind:ident, $mr:ident, $plo:ident, $mrsu:ident,
             $pwmie:ident, $cdir:ident, $ams:ident, $mr_module:ty) => {
@@ -117,42 +132,44 @@ macro_rules! impl_for_timer {
 
 macro_rules! pwm_half {
     ($StructName:ident, $timer:path, $en_bit:expr, $ilr:ident, $matchr:ident) => {
-        /// One half of a PWM timer
-        impl embedded_hal::Pwm for $StructName<$timer> {
-            type Channel = ();
-            type Time = u32; // clock cycles, proper abstraction tbd
-            type Duty = u32; // also clock cycles
+        impl embedded_hal::pwm::ErrorType for $StructName<$timer> {
+            type Error = Error;
+        }
 
-            fn enable(&mut self, _: ()) {
-                unsafe { crate::bb::change_bit(&self.timer.ctl, $en_bit, true) }
-            }
-
-            fn disable(&mut self, _: ()) {
-                unsafe { crate::bb::change_bit(&self.timer.ctl, $en_bit, false) }
-            }
-
-            fn get_period(&self) -> Self::Time {
-                self.timer.$ilr.read().bits()
-            }
-
-            fn set_period<P: Into<Self::Time>>(&mut self, period: P) {
-                self.timer.$ilr.write(|w| unsafe { w.bits(period.into()) });
-            }
-
-            fn get_duty(&self, _: ()) -> Self::Duty {
-                let thresh = self.timer.$matchr.read().bits();
-                let period = self.get_period();
-                period - thresh
-            }
-
-            fn get_max_duty(&self) -> Self::Duty {
+        impl embedded_hal::pwm::SetDutyCycle for $StructName<$timer> {
+            fn max_duty_cycle(&self) -> u16 {
                 self.get_period()
             }
 
-            fn set_duty(&mut self, _: (), duty: Self::Duty) {
+            fn set_duty_cycle(&mut self, duty: u16) -> Result<(), Self::Error> {
                 self.timer
                     .$matchr
-                    .write(|w| unsafe { w.bits(self.get_period() - duty) });
+                    .write(|w| unsafe { w.bits(u32::from(self.get_period() - duty)) });
+                Ok(())
+            }
+        }
+        /// One half of a PWM timer
+        impl $StructName<$timer> {
+            /// Enables a PWM `channel`
+            pub fn enable(&mut self, _: ()) {
+                unsafe { crate::bb::change_bit(&self.timer.ctl, $en_bit, true) }
+            }
+
+            /// Disables a PWM `channel`
+            pub fn disable(&mut self, _: ()) {
+                unsafe { crate::bb::change_bit(&self.timer.ctl, $en_bit, false) }
+            }
+
+            /// Returns the current PWM period
+            pub fn get_period(&self) -> u16 {
+                self.timer.$ilr.read().bits() as u16
+            }
+
+            /// Sets a new PWM period
+            pub fn set_period<P: Into<u16>>(&mut self, period: P) {
+                self.timer
+                    .$ilr
+                    .write(|w| unsafe { w.bits(u32::from(period.into())) });
             }
         }
     };

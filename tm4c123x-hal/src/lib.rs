@@ -30,8 +30,6 @@ pub use tm4c_hal::{bb, delay, time};
 #[cfg(feature = "rt")]
 pub use crate::tm4c123x::interrupt;
 
-use embedded_hal as hal;
-
 use sealed::Sealed;
 mod sealed {
     // To prevent implementation of `*Pin` traits on arbitrary types

@@ -1,6 +1,6 @@
 //! Serial Peripheral Interface (SPI) bus
 
-pub use crate::hal::spi::{Mode, MODE_0, MODE_1, MODE_2, MODE_3};
+pub use embedded_hal::spi::{Mode, MODE_0, MODE_1, MODE_2, MODE_3};
 
 use crate::{
     gpio::{
@@ -9,7 +9,6 @@ use crate::{
         gpiod::{PD0, PD2, PD3},
         AlternateFunction, OutputMode, AF1, AF2,
     },
-    hal::spi::{FullDuplex, Phase, Polarity},
     sysctl,
     sysctl::Clocks,
     time::Hertz,
@@ -18,12 +17,7 @@ use crate::{
 
 use tm4c123x::{SSI0, SSI1, SSI2, SSI3};
 
-/// SPI error
-#[derive(Debug)]
-pub enum Error {
-    #[doc(hidden)]
-    _Extensible,
-}
+use embedded_hal::spi::{Phase, Polarity};
 
 /// SCK pin
 pub trait SckPin<SPI>: Sealed {}
@@ -58,17 +52,6 @@ impl<T> MosiPin<SSI3> for PD3<AlternateFunction<AF1, T>> where T: OutputMode {}
 pub struct Spi<SPI, PINS> {
     spi: SPI,
     pins: PINS,
-}
-
-macro_rules! busy_wait {
-    ($spi:expr, $flag:ident, $op:ident) => {
-        loop {
-            let sr = $spi.sr.read();
-            if sr.$flag().$op() {
-                break;
-            }
-        }
-    };
 }
 
 macro_rules! hal {
@@ -184,36 +167,78 @@ macro_rules! hal {
                 }
             }
 
-            impl<PINS> FullDuplex<u8> for Spi<$SPIX, PINS> {
-                type Error = Error;
 
-                fn read(&mut self) -> nb::Result<u8, Error> {
-                    // Receive FIFO Not Empty
-                    if self.spi.sr.read().rne().bit_is_clear() {
-                        Err(nb::Error::WouldBlock)
-                    } else {
-                        let r = self.spi.dr.read().data().bits() as u8;
-                        Ok(r)
-                    }
-                }
-
-                fn send(&mut self, byte: u8) -> nb::Result<(), Error> {
-                    // Transmit FIFO Not Full
-                    if self.spi.sr.read().tnf().bit_is_clear() {
-                        Err(nb::Error::WouldBlock)
-                    } else {
-                        self.spi.dr.write(|w| unsafe {
-                            w.data().bits(byte.into())
-                        });
-                        busy_wait!(self.spi, bsy, bit_is_clear);
-                        Ok(())
-                    }
-                }
+            impl<PINS> embedded_hal::spi::ErrorType for Spi<$SPIX, PINS> {
+                type Error = core::convert::Infallible; // Update if the below impl changes
             }
 
-            impl<PINS> crate::hal::blocking::spi::transfer::Default<u8> for Spi<$SPIX, PINS> {}
+            impl<PINS> embedded_hal::spi::SpiBus for Spi<$SPIX, PINS> {
 
-            impl<PINS> crate::hal::blocking::spi::write::Default<u8> for Spi<$SPIX, PINS> {}
+                fn read(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
+                    for word in words {
+                        // Receive FIFO Not Empty
+                        while self.spi.sr.read().rne().bit_is_clear() {
+                            // If receive is empty, transmit empty-data (all 1's)
+                            // Wait until transmit FIFO is Not Full
+                            while self.spi.sr.read().tnf().bit_is_clear() {}
+                            self.spi
+                            .dr
+                            .write(|w| unsafe { w.data().bits(u16::MAX) });
+                        }
+                        *word = self.spi.dr.read().data().bits() as u8;
+                    }
+                    Ok(())
+                }
+
+                fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
+                    for word in words {
+                        // Wait until Transmit FIFO is Not Full
+                        while self.spi.sr.read().tnf().bit_is_clear() {}
+                        self.spi
+                            .dr
+                            .write(|w| unsafe { w.data().bits(*word as u16) });
+                        // Read the receive to properly ignore them
+                        // Receive FIFO Not Empty
+                        while self.spi.sr.read().rne().bit_is_clear() {}
+                        self.spi.dr.read().data().bits();
+                    }
+                    Ok(())
+                }
+
+                fn transfer(&mut self, read: &mut [u8], write: &[u8]) -> Result<(), Self::Error> {
+                    for (read_byte, write_byte) in read.iter_mut().zip(write) {
+                        // Wait until Transmit FIFO is Not Full
+                        while self.spi.sr.read().tnf().bit_is_clear() {}
+                        self.spi
+                            .dr
+                            .write(|w| unsafe { w.data().bits(*write_byte as u16) });
+                        // Wait until Receive FIFO is Not Empty
+                        while self.spi.sr.read().rne().bit_is_clear() {}
+                        *read_byte = self.spi.dr.read().data().bits() as u8;
+                    }
+                    Ok(())
+                }
+
+                fn transfer_in_place(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
+                    for word in words {
+                        // Wait until Transmit FIFO is Not Full
+                        while self.spi.sr.read().tnf().bit_is_clear() {}
+                        self.spi
+                            .dr
+                            .write(|w| unsafe { w.data().bits(*word as u16) });
+                        // Wait until Receive FIFO is Not Empty
+                        while self.spi.sr.read().rne().bit_is_clear() {}
+                        *word = self.spi.dr.read().data().bits() as u8;
+                    }
+                    Ok(())
+                }
+
+                fn flush(&mut self) -> Result<(), Self::Error> {
+                    // Wait until not busy (Busy Bit)
+                    while self.spi.sr.read().bsy().bit_is_set() {}
+                    Ok(())
+                }
+            }
         )+
     }
 }

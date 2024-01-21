@@ -2,7 +2,6 @@
 
 use crate::{
     gpio::*,
-    hal::blocking::i2c::{Read, Write, WriteRead},
     sysctl::{self, Clocks},
     time::Hertz,
     Sealed,

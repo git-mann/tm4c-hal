@@ -3,7 +3,8 @@
 
 use panic_halt as _; // you can put a breakpoint on `rust_begin_unwind` to catch panics
 
-use core::fmt::Write;
+use embedded_io::Write;
+
 use cortex_m_rt::entry;
 use tm4c123x_hal::eeprom::{
     Blocks, Eeprom, EepromAddress, EepromError, Erase, Read, Write as EepromWrite,
@@ -46,7 +47,6 @@ fn main() -> ! {
         (),
         (),
         115200_u32.bps(),
-        hal::serial::NewlineMode::SwapLFtoCRLF,
         &clocks,
         &sc.power_control,
     );

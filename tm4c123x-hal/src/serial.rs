@@ -4,7 +4,6 @@
 #![allow(clippy::too_many_arguments)]
 
 pub use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
-pub use tm4c_hal::serial::NewlineMode;
 use tm4c_hal::{uart_hal_macro, uart_pin_macro};
 
 #[rustfmt::skip]
@@ -13,14 +12,11 @@ use crate::{
         gpioa, gpiob, gpioc, gpiod, gpioe, gpiof,
         AlternateFunction, OutputMode, AF1, AF2, AF8,
     },
-    hal::{prelude::*, serial},
     sysctl,
     sysctl::Clocks,
     time::Bps,
 };
-use core::{fmt, marker::PhantomData};
-use nb::{self, block};
-use void::Void;
+use core::marker::PhantomData;
 
 /// Serial abstraction
 pub struct Serial<UART, TX, RX, RTS, CTS> {
@@ -29,7 +25,6 @@ pub struct Serial<UART, TX, RX, RTS, CTS> {
     rx_pin: RX,
     rts_pin: RTS,
     cts_pin: CTS,
-    nl_mode: NewlineMode,
 }
 
 /// Serial receiver
@@ -44,7 +39,6 @@ pub struct Tx<UART, TX, RTS> {
     uart: UART,
     pin: TX,
     flow_pin: RTS,
-    nl_mode: NewlineMode,
 }
 
 uart_pin_macro!(UART0,
@@ -102,6 +96,21 @@ uart_pin_macro!(UART7,
     rx: [(gpioe::PE0, AF1)],
     tx: [(gpioe::PE1, AF1)],
 );
+
+/// Possible device specific SPI errors
+#[derive(Debug)]
+pub enum Error {
+    /// TODO: real error types
+    Oops,
+}
+
+impl embedded_io::Error for Error {
+    fn kind(&self) -> embedded_io::ErrorKind {
+        match self {
+            Error::Oops => embedded_io::ErrorKind::Other,
+        }
+    }
+}
 
 uart_hal_macro! {
     UART0: (Uart0, uart0),

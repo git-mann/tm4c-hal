@@ -35,11 +35,13 @@ pub enum PowerState {
 
 impl Clocks {
     /// Returns the frequency of the oscillator.
+    #[inline]
     pub fn osc(self) -> Hertz {
         self.osc
     }
 
     /// Returns the system (core) frequency
+    #[inline]
     pub fn sysclk(self) -> Hertz {
         self.sysclk
     }
